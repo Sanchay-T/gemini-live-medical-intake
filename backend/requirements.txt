@@ -1,0 +1,25 @@
+# FastAPI and server
+fastapi==0.115.0
+uvicorn[standard]==0.30.0
+
+# WebSocket support (11.x to keep google-genai Live API happy)
+websockets==11.0.3
+
+# Gemini API (NEW SDK for Live API)
+google-genai
+
+# Data validation and settings
+pydantic==2.9.0
+pydantic-settings==2.5.0
+
+# HTTP and file handling
+python-multipart==0.0.9
+
+# Environment variables
+python-dotenv==1.0.0
+
+# Async support
+aiofiles==24.1.0
+
+# Logging (optional, uses stdlib but can be enhanced)
+# python-json-logger==2.0.7
