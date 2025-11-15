@@ -8,6 +8,7 @@ import { useAudioStore } from '@/store/audio-store';
 import { useConversationStore } from '@/store/conversation-store';
 import { useIntakeStore } from '@/store/intake-store';
 import { useFlowStore } from '@/store/flow-store';
+import { useApiKeyStore } from '@/store/api-key-store';
 import { AudioManager } from '@/lib/audio-manager';
 import { WebSocketClient } from '@/lib/websocket-client';
 import { SoundWaveCoreOrb } from '@/components/voice/orbs/SoundWaveCoreOrb';
@@ -22,6 +23,7 @@ export function UnifiedIntakeScreen() {
   const { state, audioLevel, isConnected, setState, setAudioLevel, setConnected, setError } = useAudioStore();
   const { messages, appendTranscriptChunk, finalizeCurrentMessage } = useConversationStore();
   const { setData, extractedData } = useIntakeStore();
+  const { apiKey } = useApiKeyStore();
 
   const audioManagerRef = useRef<AudioManager | null>(null);
   const wsClientRef = useRef<WebSocketClient | null>(null);
@@ -89,7 +91,7 @@ export function UnifiedIntakeScreen() {
     if (!isConversationMode) return;
 
     const wsUrl = process.env.NEXT_PUBLIC_WS_URL || 'ws://localhost:8000/ws';
-    const wsClient = new WebSocketClient(wsUrl);
+    const wsClient = new WebSocketClient(wsUrl, apiKey);
 
     wsClient.onConnected(() => setConnected(true));
     wsClient.onDisconnected(() => setConnected(false));
@@ -107,8 +109,10 @@ export function UnifiedIntakeScreen() {
     });
     wsClient.onTurnComplete(() => finalizeCurrentMessage());
     wsClient.onIntakeComplete((message) => {
+      console.log('🏁 Intake complete signal received:', message);
       toast.success('Intake complete!', { duration: 3000 });
       setTimeout(() => {
+        console.log('🚀 Navigating to next step...');
         teardownSession();
         nextStep();
       }, 1500);
@@ -248,171 +252,193 @@ export function UnifiedIntakeScreen() {
       )}
 
       {/* Main Content Container */}
-      <div className="relative z-10 flex items-center justify-center min-h-screen p-6">
-        <div className="max-w-xl w-full">
-          {/* Welcome Content */}
-          <animated.div style={welcomeAnimation} className="text-center mb-12">
-            <h1 className="text-7xl md:text-8xl font-light mb-3 text-zen-black tracking-tight">
-              Medical Intake
-            </h1>
-            <p className="text-lg md:text-xl text-zen-gray-600 max-w-sm mx-auto">
-              Speak naturally. We handle the rest.
-            </p>
-          </animated.div>
+      <div className={`relative z-10 ${
+        isConversationMode ? 'h-screen flex flex-col' : 'flex items-center justify-center min-h-screen p-6'
+      }`}>
+        {/* Conversation Mode Layout */}
+        {isConversationMode ? (
+          <animated.div style={conversationAnimation} className="flex items-center justify-center h-full">
+            <div className="max-w-xl w-full px-6">
+              {/* Fixed Center Section - Orb, Status, Continue */}
+              <div className="flex flex-col items-center">
+                {/* Orb */}
+                <div className="flex justify-center mb-8">
+                  <SoundWaveCoreOrb
+                    state={state}
+                    audioLevel={audioLevel}
+                    onClick={handleToggle}
+                    size={280}
+                  />
+                </div>
 
-          {/* Orb - Always visible, centered */}
-          <div className="flex justify-center mb-12">
-            <SoundWaveCoreOrb
-              state={state}
-              audioLevel={audioLevel}
-              onClick={isConversationMode ? handleToggle : () => {}}
-              size={280}
-            />
-          </div>
+                {/* Status */}
+                <div className="text-center mb-6">
+                  <h2 className="text-2xl font-medium text-zen-black mb-1">
+                    {state === 'listening' && 'Listening'}
+                    {state === 'processing' && 'Processing'}
+                    {state === 'speaking' && 'AI Speaking'}
+                    {state === 'idle' && 'Ready'}
+                  </h2>
+                  <p className="text-sm text-zen-gray-600">
+                    {isActive ? 'Speak naturally' : 'Click orb to begin'}
+                  </p>
+                </div>
 
-          {/* Welcome Cards and CTA */}
-          <animated.div style={cardsAnimation}>
-            <div className="grid grid-cols-2 gap-3 mb-8">
-              {features.map((feature, index) => (
-                <div
-                  key={index}
-                  className="glass-zen-card p-4 hover:shadow-md transition-shadow duration-150"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 bg-zen-gray-100 flex items-center justify-center flex-shrink-0">
-                      {feature.icon}
-                    </div>
-                    <div>
-                      <h3 className="text-base font-semibold mb-0.5 text-zen-black">{feature.title}</h3>
-                      <p className="text-base text-zen-gray-500">{feature.description}</p>
-                    </div>
+                {/* Continue Button */}
+                {canProceed && (
+                  <div className="text-center mb-6">
+                    <Button
+                      size="lg"
+                      onClick={() => {
+                        teardownSession();
+                        nextStep();
+                      }}
+                      className="h-10 text-sm font-medium bg-zen-black hover:bg-zen-gray-900"
+                    >
+                      Continue
+                      <ArrowRight className="w-4 h-4 ml-2" />
+                    </Button>
                   </div>
-                </div>
-              ))}
-            </div>
-
-            <div className="glass-zen-card p-4 mb-6 border-l-2 border-zen-green">
-              <div className="flex items-start gap-3">
-                <Shield className="w-4 h-4 text-zen-green flex-shrink-0 mt-0.5" />
-                <div>
-                  <p className="text-xs text-zen-black font-medium mb-1">
-                    HIPAA Compliant & Encrypted
-                  </p>
-                  <p className="text-xs text-zen-gray-600 leading-relaxed">
-                    Your medical information is secure and never shared without consent.
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            <Button
-              size="lg"
-              className="w-full h-12 text-base font-medium bg-zen-black hover:bg-zen-gray-900"
-              onClick={handleStart}
-            >
-              <Mic className="w-4 h-4 mr-2" />
-              Start Voice Intake
-            </Button>
-
-            <p className="text-center text-xs text-zen-gray-500 mt-6">
-              By continuing, you agree to our Terms and Privacy Policy
-            </p>
-          </animated.div>
-
-          {/* Conversation UI - Only visible in conversation mode */}
-          {isConversationMode && (
-            <animated.div style={conversationAnimation} className="mt-16">
-              <div className="text-center mb-8">
-                <h2 className="text-2xl font-medium text-zen-black mb-1">
-                  {state === 'listening' && 'Listening'}
-                  {state === 'processing' && 'Processing'}
-                  {state === 'speaking' && 'AI Speaking'}
-                  {state === 'idle' && 'Ready'}
-                </h2>
-                <p className="text-sm text-zen-gray-600">
-                  {isActive ? 'Speak naturally' : 'Click orb to begin'}
-                </p>
+                )}
               </div>
 
-              {canProceed && (
-                <div className="text-center mb-8">
-                  <Button
-                    size="lg"
-                    onClick={() => {
-                      teardownSession();
-                      nextStep();
-                    }}
-                    className="h-10 text-sm font-medium bg-zen-black hover:bg-zen-gray-900"
-                  >
-                    Continue
-                    <ArrowRight className="w-4 h-4 ml-2" />
-                  </Button>
-                </div>
-              )}
-
-              {/* Transcript */}
+              {/* Fixed Transcript Box at Bottom */}
               {showTranscript && (
-                <div className="glass-zen-card overflow-hidden">
-                  <div className="border-b border-zen-gray-200 px-4 py-3 bg-zen-gray-50/50">
-                    <div className="flex items-center justify-between">
-                      <h3 className="text-xs font-semibold text-zen-black uppercase tracking-wide">Transcript</h3>
-                      {messages.length > 0 && (
-                        <span className="text-xs text-zen-gray-500">{messages.length}</span>
+                <div className="fixed bottom-6 left-1/2 -translate-x-1/2 w-full max-w-xl px-6">
+                  <div className="glass-zen-card overflow-hidden">
+                    <div className="border-b border-zen-gray-200 px-4 py-3 bg-zen-gray-50/50">
+                      <div className="flex items-center justify-between">
+                        <h3 className="text-xs font-semibold text-zen-black uppercase tracking-wide">Transcript</h3>
+                        {messages.length > 0 && (
+                          <span className="text-xs text-zen-gray-500">{messages.length}</span>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="p-4 space-y-4 max-h-64 overflow-y-auto">
+                      {messages.map((message, index) => (
+                        <div
+                          key={index}
+                          className={`flex gap-3 ${message.role === 'patient' ? 'flex-row-reverse' : ''}`}
+                        >
+                          <div className={`w-6 h-6 flex items-center justify-center flex-shrink-0 ${
+                            message.role === 'patient' ? 'bg-zen-black' : 'bg-zen-gray-200'
+                          }`}>
+                            {message.role === 'patient' ? (
+                              <User className="w-3 h-3 text-zen-white" />
+                            ) : (
+                              <Bot className="w-3 h-3 text-zen-gray-600" />
+                            )}
+                          </div>
+
+                          <div className="flex-1 max-w-[80%]">
+                            <p className={`text-xs px-3 py-2 ${
+                              message.role === 'patient'
+                                ? 'bg-zen-black text-zen-white'
+                                : 'bg-zen-gray-100 text-zen-gray-900'
+                            }`}>
+                              {message.content}
+                            </p>
+                          </div>
+                        </div>
+                      ))}
+                      <div ref={transcriptEndRef} />
+
+                      {state === 'speaking' && (
+                        <div className="flex items-center gap-3">
+                          <div className="w-6 h-6 bg-zen-gray-200 flex items-center justify-center">
+                            <Bot className="w-3 h-3 text-zen-gray-600" />
+                          </div>
+                          <div className="flex gap-1">
+                            {[0, 1, 2].map((i) => (
+                              <div
+                                key={i}
+                                className="w-1 h-1 bg-zen-gray-400 animate-pulse"
+                                style={{ animationDelay: `${i * 0.15}s` }}
+                              />
+                            ))}
+                          </div>
+                        </div>
                       )}
                     </div>
                   </div>
-
-                  <div className="p-4 space-y-4 max-h-96 overflow-y-auto">
-                    {messages.map((message, index) => (
-                      <div
-                        key={index}
-                        className={`flex gap-3 ${message.role === 'patient' ? 'flex-row-reverse' : ''}`}
-                      >
-                        <div className={`w-6 h-6 flex items-center justify-center flex-shrink-0 ${
-                          message.role === 'patient' ? 'bg-zen-black' : 'bg-zen-gray-200'
-                        }`}>
-                          {message.role === 'patient' ? (
-                            <User className="w-3 h-3 text-zen-white" />
-                          ) : (
-                            <Bot className="w-3 h-3 text-zen-gray-600" />
-                          )}
-                        </div>
-
-                        <div className="flex-1 max-w-[80%]">
-                          <p className={`text-xs px-3 py-2 ${
-                            message.role === 'patient'
-                              ? 'bg-zen-black text-zen-white'
-                              : 'bg-zen-gray-100 text-zen-gray-900'
-                          }`}>
-                            {message.content}
-                          </p>
-                        </div>
-                      </div>
-                    ))}
-                    <div ref={transcriptEndRef} />
-
-                    {state === 'speaking' && (
-                      <div className="flex items-center gap-3">
-                        <div className="w-6 h-6 bg-zen-gray-200 flex items-center justify-center">
-                          <Bot className="w-3 h-3 text-zen-gray-600" />
-                        </div>
-                        <div className="flex gap-1">
-                          {[0, 1, 2].map((i) => (
-                            <div
-                              key={i}
-                              className="w-1 h-1 bg-zen-gray-400 animate-pulse"
-                              style={{ animationDelay: `${i * 0.15}s` }}
-                            />
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                  </div>
                 </div>
               )}
+            </div>
+          </animated.div>
+        ) : (
+          /* Welcome Screen Layout */
+          <div className="max-w-xl w-full">
+            {/* Welcome Content */}
+            <animated.div style={welcomeAnimation} className="text-center mb-12">
+              <h1 className="text-7xl md:text-8xl font-light mb-3 text-zen-black tracking-tight">
+                Medical Intake
+              </h1>
+              <p className="text-lg md:text-xl text-zen-gray-600 max-w-sm mx-auto">
+                Speak naturally. We handle the rest.
+              </p>
             </animated.div>
-          )}
-        </div>
+
+            {/* Orb - Always visible, centered */}
+            <div className="flex justify-center mb-12">
+              <SoundWaveCoreOrb
+                state={state}
+                audioLevel={audioLevel}
+                onClick={() => {}}
+                size={280}
+              />
+            </div>
+
+            {/* Welcome Cards and CTA */}
+            <animated.div style={cardsAnimation}>
+              <div className="grid grid-cols-2 gap-3 mb-8">
+                {features.map((feature, index) => (
+                  <div
+                    key={index}
+                    className="glass-zen-card p-4 hover:shadow-md transition-shadow duration-150"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 bg-zen-gray-100 flex items-center justify-center flex-shrink-0">
+                        {feature.icon}
+                      </div>
+                      <div>
+                        <h3 className="text-base font-semibold mb-0.5 text-zen-black">{feature.title}</h3>
+                        <p className="text-base text-zen-gray-500">{feature.description}</p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <div className="glass-zen-card p-4 mb-6 border-l-2 border-zen-green">
+                <div className="flex items-start gap-3">
+                  <Shield className="w-4 h-4 text-zen-green flex-shrink-0 mt-0.5" />
+                  <div>
+                    <p className="text-xs text-zen-black font-medium mb-1">
+                      HIPAA Compliant & Encrypted
+                    </p>
+                    <p className="text-xs text-zen-gray-600 leading-relaxed">
+                      Your medical information is secure and never shared without consent.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <Button
+                size="lg"
+                className="w-full h-12 text-base font-medium bg-zen-black hover:bg-zen-gray-900"
+                onClick={handleStart}
+              >
+                <Mic className="w-4 h-4 mr-2" />
+                Start Voice Intake
+              </Button>
+
+              <p className="text-center text-xs text-zen-gray-500 mt-6">
+                By continuing, you agree to our Terms and Privacy Policy
+              </p>
+            </animated.div>
+          </div>
+        )}
       </div>
     </div>
   );

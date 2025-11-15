@@ -18,27 +18,27 @@ export function VoiceOrb({ isActive, state, audioLevel, onClick, className }: Vo
     switch (state) {
       case 'listening':
         return {
-          borderColor: 'border-foreground',
-          pulseOpacity: 0.8 + audioLevel * 0.2,
-          icon: <Mic className="w-12 h-12" />,
+          ringColor: 'border-zen-green',
+          icon: <Mic className="w-12 h-12 text-zen-black" />,
+          showRing: true,
         };
       case 'processing':
         return {
-          borderColor: 'border-muted-foreground',
-          pulseOpacity: 1,
-          icon: <Loader2 className="w-12 h-12 animate-spin" />,
+          ringColor: 'border-zen-gray-400',
+          icon: <Loader2 className="w-12 h-12 text-zen-black animate-spin" />,
+          showRing: true,
         };
       case 'speaking':
         return {
-          borderColor: 'border-foreground',
-          pulseOpacity: 1,
-          icon: <Mic className="w-12 h-12" />,
+          ringColor: 'border-zen-green',
+          icon: <Mic className="w-12 h-12 text-zen-black" />,
+          showRing: true,
         };
       default:
         return {
-          borderColor: 'border-border',
-          pulseOpacity: 0.4,
-          icon: <MicOff className="w-12 h-12 text-muted-foreground" />,
+          ringColor: 'border-zen-gray-300',
+          icon: <MicOff className="w-12 h-12 text-zen-gray-400" />,
+          showRing: false,
         };
     }
   };
@@ -47,27 +47,23 @@ export function VoiceOrb({ isActive, state, audioLevel, onClick, className }: Vo
 
   return (
     <div className={cn('relative flex items-center justify-center', className)}>
-      {/* Subtle outer ring - only when active */}
-      {isActive && (
+      {/* Minimal Zen: Single expanding ring when active */}
+      {config.showRing && (
         <motion.div
-          className={cn(
-            'absolute w-[240px] h-[240px] rounded-full border-2',
-            config.borderColor
-          )}
-          initial={{ opacity: 0, scale: 0.9 }}
+          className={cn('absolute w-[200px] h-[200px] rounded-full border-2', config.ringColor)}
           animate={{
-            opacity: [0.1, 0.2, 0.1],
-            scale: [0.95, 1, 0.95],
+            scale: [1, 1.2],
+            opacity: [0.5, 0],
           }}
           transition={{
-            duration: 2,
+            duration: 1.5,
             repeat: Infinity,
-            ease: 'easeInOut',
+            ease: 'easeOut',
           }}
         />
       )}
 
-      {/* Main orb */}
+      {/* Main orb - pure white circle with subtle shadow */}
       <motion.button
         onClick={onClick}
         aria-label={isActive ? 'Stop voice input' : 'Start voice input'}
@@ -75,56 +71,44 @@ export function VoiceOrb({ isActive, state, audioLevel, onClick, className }: Vo
         role="button"
         tabIndex={0}
         className={cn(
-          'relative z-10 w-40 h-40 rounded-full border-2 bg-background',
-          'flex items-center justify-center transition-all duration-200 cursor-pointer',
-          config.borderColor,
-          'hover:bg-secondary',
-          'focus:outline-none focus:ring-2 focus:ring-foreground focus:ring-offset-2 focus:ring-offset-background',
-          !isActive && 'opacity-60 hover:opacity-100'
+          'relative z-10 w-40 h-40 rounded-full bg-zen-white',
+          'flex items-center justify-center cursor-pointer',
+          'border-2',
+          config.ringColor,
+          'shadow-lg',
+          'hover:shadow-xl',
+          'focus:outline-none focus:ring-2 focus:ring-zen-black focus:ring-offset-2',
+          'transition-all duration-150'
         )}
         animate={{
-          opacity: config.pulseOpacity,
+          scale: isActive ? [1, 1.02, 1] : 1,
         }}
         transition={{
-          duration: 0.2,
-          ease: 'easeOut',
+          duration: 2.5,
+          repeat: isActive ? Infinity : 0,
+          ease: 'easeInOut',
         }}
-        whileHover={{ scale: 1.02 }}
-        whileTap={{ scale: 0.98 }}
+        whileHover={{ scale: 1.03 }}
+        whileTap={{ scale: 0.97 }}
       >
         {/* Icon */}
-        <div className="relative z-10 text-foreground">{config.icon}</div>
+        <div className="relative z-10">{config.icon}</div>
       </motion.button>
 
-      {/* Subtle pulse rings for listening state */}
+      {/* Minimal pulse ring for listening state */}
       {state === 'listening' && audioLevel > 0.1 && (
-        <>
-          <motion.div
-            className="absolute w-[160px] h-[160px] rounded-full border border-foreground"
-            animate={{
-              scale: [1, 1.1],
-              opacity: [0.3, 0],
-            }}
-            transition={{
-              duration: 1,
-              repeat: Infinity,
-              ease: 'easeOut',
-            }}
-          />
-          <motion.div
-            className="absolute w-[160px] h-[160px] rounded-full border border-foreground"
-            animate={{
-              scale: [1, 1.1],
-              opacity: [0.3, 0],
-            }}
-            transition={{
-              duration: 1,
-              repeat: Infinity,
-              ease: 'easeOut',
-              delay: 0.5,
-            }}
-          />
-        </>
+        <motion.div
+          className="absolute w-[160px] h-[160px] rounded-full border border-zen-green"
+          animate={{
+            scale: [1, 1.15],
+            opacity: [0.4, 0],
+          }}
+          transition={{
+            duration: 1,
+            repeat: Infinity,
+            ease: 'easeOut',
+          }}
+        />
       )}
     </div>
   );

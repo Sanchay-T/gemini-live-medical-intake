@@ -1,13 +1,23 @@
 # Medical Intake App
 
-Production-ready example of a Gemini Live, speech-to-speech intake assistant. The backend is FastAPI, the frontend is Next.js/React, and the whole stack is optimized for tutorials—you only need the pieces required to capture patient info and hand it to a doctor quickly.
+Production-ready voice-first medical intake assistant powered by Gemini Live API. Features a clean, minimalist Zen design with real-time speech-to-speech conversation, animated voice orb visualization, and instant medical data extraction.
+
+## Features
+
+- 🎙️ **Voice-First Interface** - Natural conversation flow with AI medical assistant
+- 🎨 **Zen Design System** - Clean, minimal UI with smooth animations
+- 🌊 **Sound Wave Orb** - Beautiful animated visualization during conversation
+- 📊 **Real-Time Transcription** - See the conversation as it happens
+- 🏥 **Medical Data Extraction** - Automatic structuring of patient information
+- 🔒 **HIPAA-Ready** - Secure handling of medical data
+- ⚡ **WebSocket Streaming** - Low-latency audio communication
 
 ## Repository Layout
 
 ```
 medical-intake-app/
 ├── backend/   # FastAPI WebSocket server + Gemini Live session manager
-└── frontend/  # Next.js UI (microphone control + transcript + review screen)
+└── frontend/  # Next.js UI with Zen design (voice orb, transcript, review screens)
 ```
 
 ## Prerequisites
@@ -49,6 +59,7 @@ Set the backend URL (default FastAPI port):
 ```
 NEXT_PUBLIC_WS_URL=ws://localhost:8000/ws
 NEXT_PUBLIC_API_BASE=http://localhost:8000
+PORT=3002
 ```
 
 ## Backend Setup
@@ -72,12 +83,45 @@ npm install
 npm run dev
 ```
 
-Open `http://localhost:3000` and click the microphone button to start a conversation. Once the summary is confirmed, hit **Continue to Review** to move through the remaining screens.
+Open `http://localhost:3002` to access the medical intake app.
+
+### Using the App
+
+1. **Landing Page** - Click "Start Voice Intake" to begin
+2. **Voice Conversation** - Speak naturally with the AI assistant about your medical concerns
+3. **Live Transcript** - Watch the conversation unfold in the fixed transcript box at the bottom
+4. **Review Screen** - Verify and edit extracted medical information
+5. **Confirmation** - Confirm details before submission
+
+The animated sound wave orb visualizes the conversation state and stays centered while the transcript scrolls independently.
+
+## API Key Setup
+
+The app supports flexible API key configuration:
+
+1. **Backend Environment** (Recommended for development):
+   - Add `GEMINI_API_KEY` to `backend/.env`
+   - Backend automatically uses this key for all sessions
+
+2. **User-Provided Key** (For public deployments):
+   - If no backend key is configured, users see an API key setup screen
+   - Users can paste their own Gemini API key
+   - Key is stored locally in browser (never sent to your servers)
+   - Key is passed directly to Google's Gemini API via WebSocket query parameter
 
 ## Deployment Notes
 
-- Keep the backend `.env` file out of version control; only ship `.env.example`.
-- The frontend only needs the public websocket/API URLs—never expose your Gemini key in the browser.
-- FastAPI is stateless; scale it horizontally and point each instance at the same Gemini API project.
+- Keep the backend `.env` file out of version control; only ship `.env.example`
+- The frontend only needs public WebSocket/API URLs—never expose your Gemini key in the browser
+- For public deployments without a backend API key, users will provide their own keys
+- FastAPI is stateless; scale it horizontally and point each instance at the same Gemini API project
+- The Zen design is fully responsive and optimized for modern browsers
+
+## Tech Stack
+
+- **Frontend**: Next.js 14, React, TypeScript, Tailwind CSS, Framer Motion, Zustand
+- **Backend**: FastAPI, Python 3.9+, WebSockets, Pydantic
+- **AI**: Google Gemini Live API (speech-to-speech with function calling)
+- **Design**: Custom Zen design system with glassmorphism effects
 
 Happy building!

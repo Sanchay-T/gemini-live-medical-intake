@@ -3,6 +3,7 @@ import './globals.css'
 import { Toaster } from 'react-hot-toast'
 import { ThemeProvider } from '@/components/theme-provider'
 import { ErrorBoundary } from '@/components/ErrorBoundary'
+import { LayoutGroup } from 'framer-motion'
 
 export const metadata: Metadata = {
   title: 'Medical Intake Assistant',
@@ -26,9 +27,11 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <ErrorBoundary>
-            {children}
-          </ErrorBoundary>
+          <LayoutGroup>
+            <ErrorBoundary>
+              {children}
+            </ErrorBoundary>
+          </LayoutGroup>
           <Toaster
             position="top-center"
             toastOptions={{

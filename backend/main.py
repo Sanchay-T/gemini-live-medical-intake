@@ -137,12 +137,33 @@ async def health_check():
     }
 
 
+@app.get("/api-key-status")
+async def api_key_status():
+    """
+    Check if API key is configured in backend environment
+
+    Returns:
+        dict: API key status (without exposing the actual key)
+
+    Example Response:
+        {
+            "has_api_key": true,
+            "source": "environment"
+        }
+    """
+    has_key = bool(settings.GEMINI_API_KEY and settings.GEMINI_API_KEY.strip())
+    return {
+        "has_api_key": has_key,
+        "source": "environment" if has_key else None
+    }
+
+
 # ============================================================================
 # WEBSOCKET ENDPOINT
 # ============================================================================
 
 @app.websocket("/ws")
-async def websocket_endpoint(websocket: WebSocket):
+async def websocket_endpoint(websocket: WebSocket, api_key: str = None):
     """
     WebSocket endpoint for real-time bidirectional audio streaming
 
@@ -152,9 +173,9 @@ async def websocket_endpoint(websocket: WebSocket):
 
     Connection Flow:
     ---------------
-    1. Frontend connects to ws://localhost:8000/ws
+    1. Frontend connects to ws://localhost:8000/ws or ws://localhost:8000/ws?api_key=YOUR_KEY
     2. Server accepts connection
-    3. GeminiLiveSession is created and initialized
+    3. GeminiLiveSession is created and initialized with API key
     4. Gemini Live API connection is established
     5. Bidirectional audio streaming begins
     6. Session runs until disconnection or error
@@ -217,9 +238,10 @@ async def websocket_endpoint(websocket: WebSocket):
 
     Args:
         websocket (WebSocket): The WebSocket connection
+        api_key (str, optional): Gemini API key from query parameter
 
     Example Frontend Connection (JavaScript):
-        const ws = new WebSocket('ws://localhost:8000/ws');
+        const ws = new WebSocket('ws://localhost:8000/ws?api_key=YOUR_KEY');
 
         // Send audio
         ws.send(audioPCMBytes);
@@ -244,9 +266,24 @@ async def websocket_endpoint(websocket: WebSocket):
     await websocket.accept()
     logger.info("WebSocket connection accepted from client")
 
+    # Determine which API key to use
+    # Priority: 1. Query parameter, 2. Environment variable
+    final_api_key = api_key if api_key else settings.GEMINI_API_KEY
+
+    if not final_api_key:
+        logger.error("No API key provided")
+        await websocket.send_json({
+            "type": "error",
+            "message": "No API key provided. Please provide an API key via query parameter or environment variable."
+        })
+        await websocket.close()
+        return
+
+    logger.info(f"Using API key: {'from query parameter' if api_key else 'from environment'}")
+
     # Create a new Gemini Live session for this connection
     # Each WebSocket connection gets its own isolated session
-    session = GeminiLiveSession(api_key=settings.GEMINI_API_KEY)
+    session = GeminiLiveSession(api_key=final_api_key)
 
     try:
         # Run the session - this blocks until disconnection or error

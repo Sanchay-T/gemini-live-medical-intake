@@ -12,6 +12,7 @@ type IntakeCompleteHandler = (message: string) => void;
 export class WebSocketClient {
   private ws: WebSocket | null = null;
   private url: string;
+  private apiKey: string | null = null;
   private reconnectAttempts = 0;
   private maxReconnectAttempts = 5;
   private reconnectDelay = 1000;
@@ -29,8 +30,9 @@ export class WebSocketClient {
   private onTurnCompleteHandler: TurnCompleteHandler | null = null;
   private onIntakeCompleteHandler: IntakeCompleteHandler | null = null;
 
-  constructor(url: string) {
+  constructor(url: string, apiKey?: string | null) {
     this.url = url;
+    this.apiKey = apiKey || null;
   }
 
   private async checkBackendHealth(): Promise<boolean> {
@@ -73,7 +75,11 @@ export class WebSocketClient {
 
     return new Promise((resolve, reject) => {
       try {
-        this.ws = new WebSocket(this.url);
+        // Append API key to URL if provided
+        const wsUrl = this.apiKey ? `${this.url}?api_key=${encodeURIComponent(this.apiKey)}` : this.url;
+        console.log('[WebSocket] Connecting to:', wsUrl.replace(/api_key=[^&]+/, 'api_key=***'));
+
+        this.ws = new WebSocket(wsUrl);
         this.ws.binaryType = 'arraybuffer';
 
         this.ws.onopen = () => {

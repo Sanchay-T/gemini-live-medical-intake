@@ -2,87 +2,54 @@
 
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
-import { Shield, Clock, Mic, FileText, Camera } from 'lucide-react';
+import { Shield, Clock, Mic, FileText } from 'lucide-react';
 import { useFlowStore } from '@/store/flow-store';
-import { useIntakeStore } from '@/store/intake-store';
-import { useConversationStore } from '@/store/conversation-store';
-import { demoMessages, demoIntakeData } from '@/lib/demo-data';
-import { toast } from 'react-hot-toast';
+import { BackgroundParticles } from '@/components/effects/BackgroundParticles';
+import { SoundWaveCoreOrb } from '@/components/voice/orbs/SoundWaveCoreOrb';
 
 export function WelcomeScreen() {
-  const { nextStep, setStep } = useFlowStore();
-  const { setData } = useIntakeStore();
-  const { setMessages } = useConversationStore();
-
-  const loadDemoData = (targetScreen: 'conversation' | 'review' | 'confirmation') => {
-    // Load demo messages
-    setMessages(demoMessages);
-
-    // Load demo intake data
-    setData(demoIntakeData);
-
-    // Navigate to target screen
-    if (targetScreen === 'conversation') {
-      setStep('conversation');
-      toast.success('📸 Demo mode: Conversation Screen loaded');
-    } else if (targetScreen === 'review') {
-      setStep('review');
-      toast.success('📸 Demo mode: Review Screen loaded');
-    } else if (targetScreen === 'confirmation') {
-      setStep('confirmation');
-      toast.success('📸 Demo mode: Confirmation Screen loaded');
-    }
-  };
+  const { nextStep } = useFlowStore();
 
   const features = [
     {
-      icon: <Mic className="w-5 h-5" />,
+      icon: <Mic className="w-4 h-4" />,
       title: 'Voice-First',
-      description: 'Simply speak - no typing required',
+      description: 'Simply speak',
     },
     {
-      icon: <Clock className="w-5 h-5" />,
+      icon: <Clock className="w-4 h-4" />,
       title: '3-5 Minutes',
-      description: 'Quick and efficient process',
+      description: 'Quick process',
     },
     {
-      icon: <Shield className="w-5 h-5" />,
-      title: 'HIPAA Compliant',
-      description: 'Your data is secure and private',
+      icon: <Shield className="w-4 h-4" />,
+      title: 'HIPAA Secure',
+      description: 'Private & encrypted',
     },
     {
-      icon: <FileText className="w-5 h-5" />,
+      icon: <FileText className="w-4 h-4" />,
       title: 'Review & Edit',
-      description: 'Confirm before submitting',
+      description: 'Confirm first',
     },
   ];
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-6">
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-        className="max-w-2xl w-full"
-      >
-        {/* Header */}
-        <div className="text-center mb-12">
-          <motion.div
-            initial={{ scale: 0.9 }}
-            animate={{ scale: 1 }}
-            transition={{ delay: 0.1, duration: 0.3 }}
-            className="inline-block mb-4"
-          >
-            <div className="w-20 h-20 bg-primary rounded-2xl flex items-center justify-center mx-auto">
-              <Mic className="w-10 h-10 text-primary-foreground" />
-            </div>
-          </motion.div>
+    <div className="min-h-screen bg-zen-gray-50 flex items-center justify-center p-6 relative">
+      <BackgroundParticles />
 
+      <motion.div
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3, ease: 'easeOut' }}
+        className="max-w-xl w-full relative z-10"
+      >
+        {/* Minimal Header */}
+        <div className="text-center mb-12">
           <motion.h1
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            transition={{ delay: 0.2 }}
-            className="text-4xl md:text-5xl font-bold mb-4 text-foreground"
+            transition={{ delay: 0.1 }}
+            className="text-7xl md:text-8xl font-light mb-3 text-zen-black tracking-tight"
           >
             Medical Intake
           </motion.h1>
@@ -90,35 +57,51 @@ export function WelcomeScreen() {
           <motion.p
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            transition={{ delay: 0.3 }}
-            className="text-lg text-muted-foreground max-w-md mx-auto"
+            transition={{ delay: 0.15 }}
+            className="text-lg md:text-xl text-zen-gray-600 max-w-sm mx-auto"
           >
-            Complete your medical intake by speaking naturally. We'll handle the rest.
+            Speak naturally. We handle the rest.
           </motion.p>
         </div>
 
-        {/* Features Grid */}
+        {/* Orb Preview */}
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ delay: 0.3, duration: 0.5, ease: [0.4, 0, 0.2, 1] }}
+          className="flex justify-center mb-12"
+        >
+          <SoundWaveCoreOrb
+            layoutId="voice-orb"
+            state="idle"
+            audioLevel={0}
+            onClick={() => {}}
+            size={280}
+          />
+        </motion.div>
+
+        {/* Minimal Features Grid */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ delay: 0.4 }}
-          className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-10"
+          transition={{ delay: 0.2 }}
+          className="grid grid-cols-2 gap-3 mb-8"
         >
           {features.map((feature, index) => (
             <motion.div
               key={index}
-              initial={{ opacity: 0, y: 10 }}
+              initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.5 + index * 0.1 }}
-              className="bg-card border border-border rounded-xl p-5 hover:shadow-md transition-shadow"
+              transition={{ delay: 0.25 + index * 0.05 }}
+              className="glass-zen-card p-4 hover:shadow-md transition-shadow duration-150"
             >
-              <div className="flex items-start gap-4">
-                <div className="w-10 h-10 bg-secondary rounded-lg flex items-center justify-center flex-shrink-0">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 bg-zen-gray-100 flex items-center justify-center flex-shrink-0">
                   {feature.icon}
                 </div>
                 <div>
-                  <h3 className="font-semibold mb-1 text-foreground">{feature.title}</h3>
-                  <p className="text-sm text-muted-foreground">{feature.description}</p>
+                  <h3 className="text-base font-semibold mb-0.5 text-zen-black">{feature.title}</h3>
+                  <p className="text-base text-zen-gray-500">{feature.description}</p>
                 </div>
               </div>
             </motion.div>
@@ -129,106 +112,48 @@ export function WelcomeScreen() {
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ delay: 0.9 }}
-          className="bg-secondary/50 border border-border rounded-lg p-4 mb-8"
+          transition={{ delay: 0.45 }}
+          className="glass-zen-card p-4 mb-6 border-l-2 border-zen-green"
         >
           <div className="flex items-start gap-3">
-            <Shield className="w-5 h-5 text-success flex-shrink-0 mt-0.5" />
+            <Shield className="w-4 h-4 text-zen-green flex-shrink-0 mt-0.5" />
             <div>
-              <p className="text-sm text-foreground font-medium mb-1">
-                Your Privacy is Protected
+              <p className="text-xs text-zen-black font-medium mb-1">
+                HIPAA Compliant & Encrypted
               </p>
-              <p className="text-xs text-muted-foreground">
-                This conversation is HIPAA compliant and encrypted end-to-end. Your medical
-                information is never shared without your explicit consent.
+              <p className="text-xs text-zen-gray-600 leading-relaxed">
+                Your medical information is secure and never shared without consent.
               </p>
             </div>
           </div>
         </motion.div>
 
-        {/* Demo Mode for Screenshots */}
+        {/* CTA */}
         <motion.div
-          initial={{ opacity: 0, y: 10 }}
+          initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.95 }}
-          className="mb-6 p-5 bg-card border-2 border-dashed border-border rounded-xl"
-        >
-          <div className="flex items-center gap-2 mb-4">
-            <Camera className="w-5 h-5 text-muted-foreground" />
-            <h3 className="font-semibold text-foreground text-sm">📸 Screenshot Mode</h3>
-            <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full font-medium">
-              Demo Data
-            </span>
-          </div>
-          <p className="text-xs text-muted-foreground mb-4">
-            Jump to any screen with realistic demo data pre-loaded for documentation
-          </p>
-          <div className="grid grid-cols-3 gap-2">
-            <Button
-              size="sm"
-              variant="outline"
-              className="text-xs"
-              onClick={() => loadDemoData('conversation')}
-            >
-              Step 1: Talk
-            </Button>
-            <Button
-              size="sm"
-              variant="outline"
-              className="text-xs"
-              onClick={() => loadDemoData('review')}
-            >
-              Step 2: Review
-            </Button>
-            <Button
-              size="sm"
-              variant="outline"
-              className="text-xs"
-              onClick={() => loadDemoData('confirmation')}
-            >
-              Step 3: Confirm
-            </Button>
-          </div>
-        </motion.div>
-
-        {/* CTA Buttons */}
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 1 }}
-          className="space-y-3"
+          transition={{ delay: 0.55 }}
+          className="space-y-2"
         >
           <Button
             size="lg"
-            className="w-full h-14 text-lg font-semibold"
+            className="w-full h-12 text-base font-medium bg-zen-black hover:bg-zen-gray-900"
             onClick={nextStep}
           >
-            <Mic className="w-5 h-5 mr-2" />
+            <Mic className="w-4 h-4 mr-2" />
             Start Voice Intake
           </Button>
 
-          <Button
-            size="lg"
-            variant="outline"
-            className="w-full h-14"
-            onClick={() => {
-              // Skip to manual form (future feature)
-              console.log('Manual form not yet implemented');
-            }}
-          >
-            <FileText className="w-5 h-5 mr-2" />
-            Fill Form Manually
-          </Button>
         </motion.div>
 
-        {/* Footer Note */}
+        {/* Footer */}
         <motion.p
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ delay: 1.1 }}
-          className="text-center text-xs text-muted-foreground mt-8"
+          transition={{ delay: 0.6 }}
+          className="text-center text-xs text-zen-gray-500 mt-6"
         >
-          By continuing, you agree to our Terms of Service and Privacy Policy
+          By continuing, you agree to our Terms and Privacy Policy
         </motion.p>
       </motion.div>
     </div>

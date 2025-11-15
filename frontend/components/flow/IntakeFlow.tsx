@@ -2,8 +2,7 @@
 
 import { AnimatePresence, motion } from 'framer-motion';
 import { useFlowStore } from '@/store/flow-store';
-import { WelcomeScreen } from './WelcomeScreen';
-import { ConversationScreen } from './ConversationScreen';
+import { UnifiedIntakeScreen } from './UnifiedIntakeScreen';
 import { ReviewScreen } from './ReviewScreen';
 import { ConfirmationScreen } from './ConfirmationScreen';
 import { SuccessScreen } from './SuccessScreen';
@@ -25,29 +24,16 @@ export function IntakeFlow() {
 
   return (
     <AnimatePresence mode="wait">
-      {currentStep === 'welcome' && (
+      {(currentStep === 'welcome' || currentStep === 'conversation') && (
         <motion.div
-          key="welcome"
+          key="unified-intake"
           variants={pageVariants}
           initial="initial"
           animate="animate"
           exit="exit"
           transition={pageTransition}
         >
-          <WelcomeScreen />
-        </motion.div>
-      )}
-
-      {currentStep === 'conversation' && (
-        <motion.div
-          key="conversation"
-          variants={pageVariants}
-          initial="initial"
-          animate="animate"
-          exit="exit"
-          transition={pageTransition}
-        >
-          <ConversationScreen />
+          <UnifiedIntakeScreen />
         </motion.div>
       )}
 
