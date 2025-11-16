@@ -3,7 +3,10 @@
 import { useState, useEffect } from 'react';
 import { IntakeFlow } from '@/components/flow/IntakeFlow';
 import { BackendWakeup } from '@/components/ui/BackendWakeup';
+import { ApiKeySetup } from '@/components/setup/ApiKeySetup';
 import { checkBackendHealth } from '@/lib/backend-health';
+
+const API_BASE = process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:8000';
 
 export default function Home() {
   const [isBackendReady, setIsBackendReady] = useState(false);
@@ -11,6 +14,8 @@ export default function Home() {
   const [maxAttempts] = useState(12);
   const [nextRetryDelay, setNextRetryDelay] = useState(0);
   const [checkFailed, setCheckFailed] = useState(false);
+  const [needsApiKey, setNeedsApiKey] = useState(false);
+  const [userApiKey, setUserApiKey] = useState<string | null>(null);
 
   useEffect(() => {
     // Check backend health on mount
@@ -32,7 +37,32 @@ export default function Home() {
             result.wasColdStart ? ', cold start' : ''
           })`
         );
-        setIsBackendReady(true);
+
+        // Check if backend has API key or if user has provided one
+        const checkApiKey = async () => {
+          try {
+            const response = await fetch(`${API_BASE}/api-key-status`);
+            const data = await response.json();
+
+            if (!data.has_api_key) {
+              // Check localStorage for user's API key
+              const storedKey = localStorage.getItem('gemini_api_key');
+              if (storedKey) {
+                setUserApiKey(storedKey);
+                setIsBackendReady(true);
+              } else {
+                setNeedsApiKey(true);
+              }
+            } else {
+              setIsBackendReady(true);
+            }
+          } catch (error) {
+            console.error('Failed to check API key status:', error);
+            setIsBackendReady(true); // Proceed anyway
+          }
+        };
+
+        await checkApiKey();
       } else {
         console.error(
           `❌ Backend health check failed after ${result.attempts} attempts`
@@ -81,6 +111,17 @@ export default function Home() {
     );
   }
 
+  const handleApiKeySubmit = (apiKey: string) => {
+    localStorage.setItem('gemini_api_key', apiKey);
+    setUserApiKey(apiKey);
+    setNeedsApiKey(false);
+    setIsBackendReady(true);
+  };
+
+  if (needsApiKey) {
+    return <ApiKeySetup onApiKeySubmit={handleApiKeySubmit} />;
+  }
+
   if (!isBackendReady) {
     return (
       <BackendWakeup
@@ -91,5 +132,5 @@ export default function Home() {
     );
   }
 
-  return <IntakeFlow />;
+  return <IntakeFlow apiKey={userApiKey} />;
 }

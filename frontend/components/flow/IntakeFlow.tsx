@@ -19,7 +19,11 @@ const pageTransition = {
   duration: 0.3,
 };
 
-export function IntakeFlow() {
+interface Props {
+  apiKey?: string | null;
+}
+
+export function IntakeFlow({ apiKey }: Props) {
   const { currentStep } = useFlowStore();
 
   return (
@@ -33,7 +37,7 @@ export function IntakeFlow() {
           exit="exit"
           transition={pageTransition}
         >
-          <UnifiedIntakeScreen />
+          <UnifiedIntakeScreen apiKey={apiKey} />
         </motion.div>
       )}
 
