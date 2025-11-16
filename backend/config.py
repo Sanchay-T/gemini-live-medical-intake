@@ -6,7 +6,7 @@ class Settings(BaseSettings):
     """Application settings"""
 
     # API Keys
-    GEMINI_API_KEY: str
+    GEMINI_API_KEY: str = ""  # Optional: users can provide via frontend
 
     # Server
     HOST: str = "0.0.0.0"
