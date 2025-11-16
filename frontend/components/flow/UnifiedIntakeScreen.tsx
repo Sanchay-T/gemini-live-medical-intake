@@ -15,7 +15,11 @@ import { SoundWaveCoreOrb } from '@/components/voice/orbs/SoundWaveCoreOrb';
 import { BackgroundParticles } from '@/components/effects/BackgroundParticles';
 import { toast } from 'react-hot-toast';
 
-export function UnifiedIntakeScreen() {
+interface Props {
+  apiKey?: string | null;
+}
+
+export function UnifiedIntakeScreen({ apiKey }: Props = {}) {
   const [isConversationMode, setIsConversationMode] = useState(false);
   const [isActive, setIsActive] = useState(false);
 
@@ -23,7 +27,10 @@ export function UnifiedIntakeScreen() {
   const { state, audioLevel, isConnected, setState, setAudioLevel, setConnected, setError } = useAudioStore();
   const { messages, appendTranscriptChunk, finalizeCurrentMessage } = useConversationStore();
   const { setData, extractedData } = useIntakeStore();
-  const { apiKey } = useApiKeyStore();
+  const { apiKey: storeApiKey } = useApiKeyStore();
+
+  // Use prop API key if provided, otherwise fall back to store
+  const finalApiKey = apiKey || storeApiKey;
 
   const audioManagerRef = useRef<AudioManager | null>(null);
   const wsClientRef = useRef<WebSocketClient | null>(null);
@@ -91,7 +98,7 @@ export function UnifiedIntakeScreen() {
     if (!isConversationMode) return;
 
     const wsUrl = process.env.NEXT_PUBLIC_WS_URL || 'ws://localhost:8000/ws';
-    const wsClient = new WebSocketClient(wsUrl, apiKey);
+    const wsClient = new WebSocketClient(wsUrl, finalApiKey);
 
     wsClient.onConnected(() => setConnected(true));
     wsClient.onDisconnected(() => setConnected(false));
