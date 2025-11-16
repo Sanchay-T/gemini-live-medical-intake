@@ -2,8 +2,8 @@
 fastapi==0.115.0
 uvicorn[standard]==0.30.0
 
-# WebSocket support (11.x to keep google-genai Live API happy)
-websockets==11.0.3
+# WebSocket support (13.x+ required by google-genai Live API)
+websockets>=13.0.0
 
 # Gemini API (NEW SDK for Live API)
 google-genai

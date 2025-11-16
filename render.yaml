@@ -1,0 +1,32 @@
+services:
+  # Backend FastAPI Service
+  - type: web
+    name: medical-intake-backend
+    runtime: python
+    region: oregon
+    plan: free
+    buildCommand: cd backend && pip install -r requirements.txt
+    startCommand: cd backend && uvicorn main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: GEMINI_API_KEY
+        sync: false  # You'll add this manually in Render dashboard
+      - key: PORT
+        value: 10000
+      - key: HOST
+        value: 0.0.0.0
+      - key: LOG_LEVEL
+        value: INFO
+      - key: CLINIC_NAME
+        value: Medical Center
+      - key: SPECIALTY
+        value: Primary Care
+      - key: GREETING_STYLE
+        value: warm
+      - key: VOICE_MODEL
+        value: Puck
+      - key: CONVERSATION_STORAGE_PATH
+        value: ./conversations
+      - key: SAVE_CONVERSATIONS
+        value: true
+    healthCheckPath: /health
+    autoDeploy: true
